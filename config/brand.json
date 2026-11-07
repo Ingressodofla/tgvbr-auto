@@ -1,17 +1,17 @@
 {
-  "_comment": "PROVISIONAL brand kit. Colours and fonts below are placeholders chosen for legibility, NOT the official identity of The Game Verse BR. Replace them with the official logo, palette and fonts before the first real publication.",
+  "_comment": "Brand kit from the account audit of 2026-11-06 (docs/BRAND_AUDIT.md). Logo is the owner's original file; colours sampled from it and from the published covers. Fonts are still Inter (placeholder) until the owner picks the headline font; keep provisional=true until then.",
   "provisional": true,
   "name": "The Game Verse BR",
-  "handle": "",
-  "logo_path": "",
+  "handle": "@thegameversebr",
+  "logo_path": "assets/brand/logo.png",
   "colors": {
-    "background_top": "#0B0B12",
-    "background_bottom": "#2A0F3D",
-    "accent": "#FF2E88",
-    "accent_2": "#21D4FD",
+    "background_top": "#001848",
+    "background_bottom": "#000A24",
+    "accent": "#FFD800",
+    "accent_2": "#FFFFFF",
     "text": "#FFFFFF",
-    "rumor": "#FFB020",
-    "official": "#2BD576"
+    "rumor": "#FF7A00",
+    "official": "#18E048"
   },
   "fonts": {
     "headline": "assets/fonts/Inter-Black.otf",

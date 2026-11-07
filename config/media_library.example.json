@@ -1,0 +1,31 @@
+{
+  "_comment": "Copy to media/library/library.json and put the files next to it (media/ is not versioned). Only register files obtained from official channels. rights_basis: own | licensed | press_kit | rockstar_fan_policy. rockstar_fan_policy = non-commercial only (https://support.rockstargames.com/articles/7bNaeoMFTV0iUDGhStTXvz): productions using it are flagged 'do not monetise'. Leaked or spoiler material is rejected.",
+  "assets": [
+    {
+      "file": "gta6_trailer2_vice_city.mp4",
+      "kind": "clip",
+      "start": 12.0,
+      "tags": ["gta vi", "gta 6", "trailer"],
+      "source_url": "https://www.rockstargames.com/VI",
+      "rights_basis": "rockstar_fan_policy",
+      "credit": "Rockstar Games",
+      "notes": "Official trailer; owner-supplied file."
+    },
+    {
+      "file": "gta6_screenshot_lucia.jpg",
+      "kind": "image",
+      "tags": ["gta vi", "gta 6", "lucia"],
+      "source_url": "https://www.rockstargames.com/VI",
+      "rights_basis": "rockstar_fan_policy",
+      "credit": "Rockstar Games"
+    },
+    {
+      "file": "gameplay_propria_gtav.mp4",
+      "kind": "clip",
+      "tags": ["gta v", "gta 5"],
+      "rights_basis": "own",
+      "credit": "The Game Verse BR",
+      "commercial_ok": true
+    }
+  ]
+}

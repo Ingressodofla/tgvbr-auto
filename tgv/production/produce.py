@@ -14,7 +14,8 @@ from pathlib import Path
 from tgv import db
 from tgv.production import graphics
 from tgv.production.brand import Brand
-from tgv.production.media import concat_wavs, duration
+from tgv.production.library import Asset, credits, rights_summary, select_assets
+from tgv.production.media import concat_wavs, duration, require, run
 from tgv.production.render import render
 from tgv.production.script import ScriptDraft, validate_script
 from tgv.production.subtitles import build_ass, caption_cues
@@ -31,13 +32,27 @@ def _item(conn: sqlite3.Connection, item_id: int) -> dict:
     return dict(row)
 
 
+def _cover_still(assets: list[Asset], workdir: Path) -> Path | None:
+    """First image asset, or a frame grabbed from the first clip (1 s after its start)."""
+    for a in assets:
+        if a.kind == "image":
+            return Path(a.file)
+    for a in assets:
+        out = workdir / "cover_still.jpg"
+        run([require("ffmpeg"), "-y", "-v", "error", "-ss", f"{a.start + 1:.3f}", "-i", a.file,
+             "-frames:v", "1", "-q:v", "2", str(out)])
+        return out
+    return None
+
+
 def next_selected(conn: sqlite3.Connection, limit: int) -> list[int]:
     return [r["id"] for r in conn.execute(
         "SELECT id FROM items WHERE status = 'selected' ORDER BY score DESC LIMIT ?", (limit,))]
 
 
 def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand, media_root: Path,
-            now: datetime, make_video: bool = True, make_carousel: bool = True) -> dict:
+            now: datetime, make_video: bool = True, make_carousel: bool = True,
+            library: list[Asset] | None = None) -> dict:
     item = _item(conn, item_id)
     if item["modality"] not in ("B", "C"):
         raise ProductionBlocked(f"modality {item['modality']} needs a licence decision before production")
@@ -76,10 +91,14 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
 
         result = {"production_id": prod_id, "script": str(workdir / "script.json"),
                   "warnings": check.warnings, "video": None, "cover": None, "carousel": []}
-        result["cover"] = str(graphics.cover(draft, brand, workdir / "cover.jpg", item["source_name"]))
+        assets = select_assets(library or [], f"{item['title']} {item.get('description') or ''}")
+        rights_basis, commercial_ok = rights_summary(assets)
+        still = _cover_still(assets, workdir)
+        result["assets"] = [a.file for a in assets]
+        result["cover"] = str(graphics.cover(draft, brand, workdir / "cover.jpg", item["source_name"], image=still))
         if make_carousel:
             result["carousel"] = [str(p) for p in graphics.carousel(draft, brand, workdir / "carousel",
-                                                                   item["source_name"])]
+                                                                   item["source_name"], image=still)]
         if make_video:
             parts, timeline, t = [], [], 0.0
             for i, seg in enumerate(draft.segments):
@@ -92,7 +111,8 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
             total = duration(workdir / "narration.wav") + 0.6
             (workdir / "captions.ass").write_text(build_ass(caption_cues(timeline), brand), encoding="utf-8")
             render(workdir, brand=brand, audio="narration.wav", ass="captions.ass", out="video.mp4",
-                   seconds=total, claim_status=draft.claim_status)
+                   seconds=total, claim_status=draft.claim_status,
+                   visuals=[(str(Path(a.file).resolve()), a.kind, a.start) for a in assets])
             result["video"] = str(workdir / "video.mp4")
 
         notes = list(draft.notes)
@@ -100,8 +120,15 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
             notes.append("placeholder (silent) narration: preview only, not publishable")
         if brand.provisional:
             notes.append("provisional brand kit: replace before publishing")
+        if not commercial_ok:
+            notes.append("do not monetise: uses material under a non-commercial policy (rockstar_fan_policy)")
+        caption = draft.caption
+        if assets:
+            caption += f"\n\nImagens: {credits(assets)}"
+
         finish("review", script=draft.to_json(), validation=json.dumps(asdict(check), ensure_ascii=False),
-               caption=draft.caption + "\n\n" + " ".join(f"#{h.lstrip('#')}" for h in draft.hashtags),
+               rights_basis=rights_basis,
+               caption=caption + "\n\n" + " ".join(f"#{h.lstrip('#')}" for h in draft.hashtags),
                media_path=result["video"], cover_path=result["cover"],
                carousel_dir=str(workdir / "carousel") if make_carousel else None,
                review_notes="; ".join(notes) or None)

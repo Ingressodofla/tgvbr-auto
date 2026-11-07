@@ -73,8 +73,10 @@ def build_ass(cues: list[Cue], brand: Brand) -> str:
     styles = [
         # Name, Font, Size, Primary, Secondary, Outline, Back, Bold, Italic, Underline, Strike,
         # ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-        f"Style: Caption,{font},92,{white},{white},{black},{shadow},-1,0,0,0,100,100,0,0,1,7,3,2,90,90,560,1",
-        f"Style: Headline,{font},70,{white},{white},{accent},{shadow},-1,0,0,0,100,100,1,0,3,18,0,8,90,90,330,1",
+        # Caption sits just above the bottom black band; Headline is the yellow box (BorderStyle 3)
+        # with black text inside the top band, like the page's covers.
+        f"Style: Caption,{font},92,{white},{white},{black},{shadow},-1,0,0,0,100,100,0,0,1,7,3,2,90,90,{int(h * 0.20) + 50},1",
+        f"Style: Headline,{font},68,{black},{black},{accent},{accent},-1,0,0,0,100,100,1,0,3,20,0,8,110,110,{int(h * 0.075)},1",
         f"Style: Tag,{font},44,{white},{white},{black},{shadow},-1,0,0,0,100,100,2,0,1,3,2,8,60,60,150,1",
     ]
     lines = [

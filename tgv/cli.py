@@ -50,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
     pr.add_argument("--no-carousel", action="store_true")
     pr.add_argument("--brand", default=str(ROOT / "config" / "brand.json"))
     pr.add_argument("--media", default=os.environ.get("TGV_MEDIA_DIR") or str(ROOT / "media"))
+    pr.add_argument("--library", default=str(ROOT / "media" / "library" / "library.json"),
+                    help="licensed media manifest (see config/media_library.example.json)")
     yc = sub.add_parser("youtube-channel", help="resolve a YouTube @handle to its channel id and feed")
     yc.add_argument("handle")
 
@@ -107,11 +109,13 @@ def main(argv: list[str] | None = None) -> int:
 
 def _produce(args, conn, now) -> int:
     from tgv.production.brand import load_brand
+    from tgv.production.library import load_library
     from tgv.production.produce import ProductionBlocked, next_selected, produce
     from tgv.production.script import ClaudeScriptWriter, TemplateScriptWriter
     from tgv.production.tts import PiperTTS, PlaceholderTTS
 
     brand = load_brand(args.brand)
+    library = load_library(args.library)
     writer = ClaudeScriptWriter() if args.writer == "claude" else TemplateScriptWriter()
     if args.voice == "piper":
         tts = PiperTTS(brand.voice.get("piper_model", ""), brand.voice.get("length_scale", 1.0))
@@ -125,7 +129,7 @@ def _produce(args, conn, now) -> int:
     for item_id in ids:
         try:
             r = produce(conn, item_id, writer=writer, tts=tts, brand=brand, media_root=Path(args.media), now=now,
-                        make_video=not args.no_video, make_carousel=not args.no_carousel)
+                        make_video=not args.no_video, make_carousel=not args.no_carousel, library=library)
             print(f"item {item_id}: review -> {r['video'] or r['cover']}")
             for w in r["warnings"]:
                 print(f"  warning: {w}")

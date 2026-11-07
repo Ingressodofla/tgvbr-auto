@@ -82,7 +82,9 @@ Depois, `python -m tgv dashboard` mostra as produções com links para vídeo, c
 `config/brand.json` controla cores, fontes, logo, @ e voz. **O kit atual é provisório** (cores e fontes escolhidas só por legibilidade, sem logo); cada produção registra essa observação até o kit oficial entrar. Para trocar: mande o logo (PNG com fundo transparente), as cores e as fontes da página.
 
 ## Fundo do vídeo
-Sem imagens, o fundo é um gradiente animado da marca. `render.build_command(images=[...])` aceita imagens **próprias ou licenciadas** com zoom lento (efeito Ken Burns). Material de terceiros nunca é baixado automaticamente (ver `COMPLIANCE.md`).
+Visual: `render.build_command(visuals=[(arquivo, "clip"|"image", início)])`. Os arquivos vêm da biblioteca licenciada (`media/library/library.json`, ver `COMPLIANCE.md`): `produce` escolhe pelas tags que aparecem no título ou na descrição do item, priorizando clipes. Cada visual aparece encaixado entre as faixas pretas, sobre uma cópia desfocada dele mesmo, e a capa usa a primeira imagem ou um quadro do primeiro clipe. Sem mídia na biblioteca, o fundo é o gradiente da marca com a logo. Material de terceiros nunca é baixado automaticamente.
+
+Layout (igual aos posts que mais performaram na página): faixa preta em cima com o selo (NOTÍCIA/RUMOR/OFICIAL) e a tarja amarela com o título em preto; faixa preta embaixo com a logo e o @. Comando: `python -m tgv produce --library media/library/library.json`.
 
 ## Licenças das dependências
 | Pacote | Licença | Observação |
