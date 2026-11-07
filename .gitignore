@@ -1,0 +1,22 @@
+# Runtime data, generated output and media never go to Git.
+data/
+out/
+media/
+*.db
+*.sqlite
+*.sqlite3
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+# Secrets: credentials live only in environment variables or a secret store.
+.env
+.env.*
+*.pem
+*.key
+*credential*
+*secret*.json
+*.mp4
+*.mov
+*.wav
+*.mp3

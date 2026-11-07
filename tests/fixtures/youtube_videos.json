@@ -1,0 +1,14 @@
+{"items": [
+  {"id": "BBBBBBBBBBB",
+   "snippet": {"publishedAt": "2026-11-06T20:00:00Z", "title": "GTA 6: 10 details you missed in trailer 3",
+               "channelTitle": "Some Creator", "description": "Breakdown of the new trailer", "defaultAudioLanguage": "en-US"},
+   "statistics": {"viewCount": "800000", "likeCount": "40000", "commentCount": "5000"},
+   "contentDetails": {"duration": "PT12M30S"},
+   "status": {"license": "youtube"}},
+  {"id": "CCCCCCCCCCC",
+   "snippet": {"publishedAt": "2026-11-06T22:00:00Z", "title": "GTA VI Lucia edit #shorts",
+               "channelTitle": "Clip Channel", "description": ""},
+   "statistics": {"viewCount": "300000", "likeCount": "30000"},
+   "contentDetails": {"duration": "PT45S"},
+   "status": {"license": "creativeCommon"}}
+]}

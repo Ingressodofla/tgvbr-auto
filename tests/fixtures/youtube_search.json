@@ -1,0 +1,5 @@
+{"items": [
+  {"id": {"kind": "youtube#video", "videoId": "BBBBBBBBBBB"}},
+  {"id": {"kind": "youtube#video", "videoId": "CCCCCCCCCCC"}},
+  {"id": {"kind": "youtube#channel", "channelId": "UCx"}}
+]}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <title>Rockstar Games</title>
+ <entry>
+  <id>yt:video:AAAAAAAAAAA</id>
+  <yt:videoId>AAAAAAAAAAA</yt:videoId>
+  <title>Grand Theft Auto VI Trailer 3</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=AAAAAAAAAAA"/>
+  <author><name>Rockstar Games</name></author>
+  <published>2026-11-06T15:00:00+00:00</published>
+  <updated>2026-11-07T00:00:00+00:00</updated>
+  <media:group>
+   <media:title>Grand Theft Auto VI Trailer 3</media:title>
+   <media:description>Watch the third trailer.</media:description>
+   <media:community>
+    <media:starRating count="900000" average="5.00" min="1" max="5"/>
+    <media:statistics views="25000000"/>
+   </media:community>
+  </media:group>
+ </entry>
+</feed>

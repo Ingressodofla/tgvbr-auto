@@ -1,0 +1,38 @@
+{
+  "_comment": "Source list for stage 1. 'enabled': false = documented but not active. No credentials here: they live in environment variables (see .env.example).",
+  "rss": [
+    {"name": "IGN", "url": "https://feeds.feedburner.com/ign/games-all", "language": "en", "enabled": true},
+    {"name": "GameSpot", "url": "https://www.gamespot.com/feeds/news/", "language": "en", "enabled": true},
+    {"name": "PC Gamer", "url": "https://www.pcgamer.com/rss/", "language": "en", "enabled": true},
+    {"name": "Eurogamer", "url": "https://www.eurogamer.net/feed", "language": "en", "enabled": true},
+    {"name": "VGC", "url": "https://www.videogameschronicle.com/feed/", "language": "en", "enabled": true},
+    {"name": "Polygon", "url": "https://www.polygon.com/rss/index.xml", "language": "en", "enabled": true},
+    {"name": "Google News: GTA 6 (US)", "url": "https://news.google.com/rss/search?q=%22GTA+6%22+OR+%22GTA+VI%22&hl=en-US&gl=US&ceid=US:en", "language": "en", "enabled": true},
+    {"name": "Rockstar Games (YouTube)", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=REPLACE_WITH_ID", "official": true, "language": "en", "enabled": false,
+     "_todo": "Resolve the official channel id with: python -m tgv youtube-channel @RockstarGames (needs TGV_YOUTUBE_API_KEY), paste it here and enable."},
+    {"name": "Rockstar Newswire", "url": "", "official": true, "enabled": false,
+     "_todo": "No documented public feed or API was confirmed for the Newswire. Official news is covered through the Rockstar YouTube feed and press coverage until a feed URL is verified."}
+  ],
+  "youtube": {
+    "enabled": true,
+    "queries": ["GTA 6", "GTA VI trailer", "GTA 6 news"],
+    "region_codes": ["US", "GB"],
+    "relevance_language": "en",
+    "lookback_hours": 72,
+    "max_results": 25,
+    "daily_unit_budget": 6000
+  },
+  "reddit": {
+    "enabled": false,
+    "_todo": "Enable only after Reddit grants API access for this use case (docs/PLATFORM_LIMITS.md).",
+    "subreddits": ["GTA6", "GTA"],
+    "listing": "hot"
+  },
+  "analysis": {
+    "window_days": 7,
+    "cluster_threshold": 0.5,
+    "cluster_window_hours": 72,
+    "min_score_to_select": 35
+  },
+  "scoring": {}
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel><title>Example Games News</title>
+<item>
+  <title>GTA 6 trailer 3 release date announced by Rockstar</title>
+  <link>https://news.example.com/gta-6-trailer-3-release-date?utm_source=rss</link>
+  <guid>n-1</guid>
+  <pubDate>Fri, 06 Nov 2026 18:00:00 GMT</pubDate>
+  <dc:creator>Jane Doe</dc:creator>
+  <description><![CDATA[<p>Rockstar Games has announced when the third trailer arrives.</p>]]></description>
+</item>
+<item>
+  <title>GTA 6 map leak reportedly shows all of Leonida</title>
+  <link>https://news.example.com/gta-6-map-leak</link>
+  <guid>n-2</guid>
+  <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+  <description>An insider claims the full map leaked online.</description>
+</item>
+<item>
+  <title>Best cozy farming games of the year</title>
+  <link>https://news.example.com/cozy-farming</link>
+  <guid>n-3</guid>
+  <pubDate>Fri, 06 Nov 2026 10:00:00 GMT</pubDate>
+  <description>Nothing to do with Rockstar.</description>
+</item>
+<item>
+  <title>Item without date is ignored</title>
+  <link>https://news.example.com/no-date</link>
+</item>
+</channel></rss>
