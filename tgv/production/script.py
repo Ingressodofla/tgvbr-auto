@@ -21,6 +21,7 @@ MODEL = "claude-opus-5-5"
 WORDS_PER_SECOND = 2.6  # typical pt-BR narration pace; used for duration estimates
 MAX_SECONDS = 75
 MIN_SECONDS = 15
+NARRATED_FORMATS = {"news", "analysis", "list"}
 
 
 @dataclass
@@ -32,7 +33,7 @@ class Segment:
 @dataclass
 class ScriptDraft:
     title: str  # internal title / video title, pt-BR
-    format: str  # news | analysis | list
+    format: str  # news | analysis | list (narrated) | clip (library clip with its own audio, no narration)
     claim_status: str  # copied from the item; the writer cannot upgrade it
     segments: list[Segment]
     caption: str  # post caption, pt-BR
@@ -77,19 +78,33 @@ class Validation:
     warnings: list[str]
 
 
-def validate_script(draft: ScriptDraft, *, item_url: str, item_claim_status: str) -> Validation:
+def validate_script(draft: ScriptDraft, *, item_url: str, item_claim_status: str,
+                    clip_available: bool = False) -> Validation:
     errors, warnings = [], []
-    text = fold(f"{draft.title} {draft.narration_text()} {draft.caption} {draft.cover_text}")
+    text = fold(f"{draft.title} {draft.narration_text()} {draft.caption} {draft.cover_text} "
+                f"{' '.join(s.on_screen for s in draft.segments)}")
+    is_clip = draft.format == "clip"
+    if is_clip and not clip_available:
+        errors.append("clip format needs a licensed clip with usable audio in the media library")
+    if is_clip and item_claim_status == "unverified":
+        errors.append("rumors are always narrated (clip format not allowed): the context must be explained")
+    if not is_clip and draft.format not in NARRATED_FORMATS:
+        errors.append(f"unknown format {draft.format!r}")
 
     if draft.claim_status != item_claim_status:
         errors.append("claim_status changed by the writer")
     if not draft.segments:
         errors.append("script has no segments")
     secs = draft.estimated_seconds()
-    if secs > MAX_SECONDS:
-        errors.append(f"too long: ~{secs:.0f}s of narration (max {MAX_SECONDS}s)")
-    if secs < MIN_SECONDS:
-        warnings.append(f"short: ~{secs:.0f}s of narration")
+    if not is_clip:
+        if secs > MAX_SECONDS:
+            errors.append(f"too long: ~{secs:.0f}s of narration (max {MAX_SECONDS}s)")
+        if secs < MIN_SECONDS:
+            warnings.append(f"short: ~{secs:.0f}s of narration")
+        if any(not s.narration.strip() for s in draft.segments):
+            errors.append("narrated format with an empty narration segment")
+    elif len(draft.segments) > 3:
+        warnings.append("clip format: more than 3 on-screen texts")
     for i, s in enumerate(draft.segments):
         if len(s.on_screen.split()) > 7:
             warnings.append(f"segment {i + 1}: on-screen text has more than 7 words")
@@ -125,7 +140,7 @@ SCRIPT_SCHEMA = {
     "type": "object",
     "properties": {
         "title": {"type": "string"},
-        "format": {"type": "string", "enum": ["news", "analysis", "list"]},
+        "format": {"type": "string", "enum": ["news", "analysis", "list", "clip"]},
         "segments": {
             "type": "array",
             "items": {
@@ -163,7 +178,13 @@ Regras editoriais (obrigatórias):
 - Status "reported": diga quem noticiou ("segundo o IGN..."). Não diga que a Rockstar confirmou.
 - Status "unverified": é RUMOR. Escreva "rumor" ou "não confirmado" no cover_text ou no primeiro segmento E na caption. Nunca use "confirmado" ou "oficial" para o rumor.
 - Traduza o sentido, não palavra por palavra. Nomes próprios (Lucia, Jason, Leonida, Vice City) ficam como estão.
-- Escreva números e siglas como devem ser falados pela narração (ex.: "GTA seis")."""
+- Escreva números e siglas como devem ser falados pela narração (ex.: "GTA seis").
+
+Formato "clip" (sem narração) — pondere caso a caso:
+- Só pode ser usado quando o material indicar clip_available: true.
+- Use "clip" quando o vídeo fala por si: gameplay, comparação de gráficos, física, momento marcante de trailer, algo engraçado ou impressionante de ver. O público entende pela imagem; quem fala em inglês no vídeo não precisa de tradução.
+- Use formato narrado (news/analysis/list) quando a informação está no texto e não na imagem: preço, data, edição, lei, declaração, contexto da notícia. Rumor é sempre narrado.
+- No "clip": 1 a 3 segmentos com narration vazia ("") e on_screen curto (gancho em pt-BR, ex.: "GTA 5 COM DLSS 5"); cover_text no mesmo estilo; a caption em pt-BR explica em 1-2 frases e termina com uma pergunta para comentar + crédito da fonte."""
 
 
 def build_user_prompt(item: dict) -> str:
@@ -177,8 +198,9 @@ def build_user_prompt(item: dict) -> str:
         f"category: {item['category']}\n"
         f"title: {item['title']}\n"
         f"description: {item.get('description') or ''}\n"
+        f"clip_available: {'true' if item.get('clip_available') else 'false'}\n"
         f"</item>\n"
-        f"Formato desejado: {'news' if item.get('modality') == 'C' else 'analysis'}."
+        f"Formato padrão se precisar de narração: {'news' if item.get('modality') == 'C' else 'analysis'}."
     )
 
 
@@ -251,6 +273,14 @@ class TemplateScriptWriter:
             hook = f"Segundo {source}: {title}."
             cover = "NOVIDADE GTA VI"
             caption = f"Fonte: {source}."
+        if item.get("clip_available") and status != "unverified":
+            return ScriptDraft(
+                title=title, format="clip", claim_status=status,
+                segments=[Segment("", cover.title())], caption=f"{caption} O que você achou? Comenta aí!",
+                hashtags=["gta6", "gtavi", "rockstargames", "games"], sources=[item["url"]],
+                cover_text=cover, writer=self.name,
+                notes=["template writer: clip format, review the on-screen text"],
+            )
         desc = (item.get("description") or "").strip()
         body = desc[:300] if desc else "Os detalhes estão na fonte original, link na descrição."
         segments = [

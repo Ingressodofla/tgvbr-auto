@@ -41,6 +41,8 @@ class Asset:
     credit: str
     commercial_ok: bool = False
     start: float = 0.0          # clips: where the usable part starts (seconds)
+    duration: float = 30.0      # clips: how many seconds to use in the clip format
+    mute: bool = False          # clips: never use this clip's audio (e.g. licensed music)
     reference: str = ""         # licence / terms / permission reference
     notes: str = ""
     extra: dict = field(default_factory=dict)
@@ -83,7 +85,9 @@ def load_library(path: str | Path) -> list[Asset]:
         commercial = bool(raw.get("commercial_ok", basis == "own")) and basis not in NON_COMMERCIAL_BASES
         assets.append(Asset(file=str(file), kind=kind, tags=tags, source_url=raw.get("source_url", ""),
                             rights_basis=basis, credit=raw.get("credit", ""), commercial_ok=commercial,
-                            start=float(raw.get("start", 0) or 0), reference=raw.get("reference", ""),
+                            start=float(raw.get("start", 0) or 0),
+                            duration=min(60.0, float(raw.get("duration", 30) or 30)),
+                            mute=bool(raw.get("mute", False)), reference=raw.get("reference", ""),
                             notes=raw.get("notes", "")))
     if errors:
         raise LibraryError("media library invalid:\n" + "\n".join(errors))

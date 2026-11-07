@@ -34,14 +34,15 @@ def _ffcolor(hex_color: str) -> str:
     return "0x" + hex_color.lstrip("#")
 
 
-def build_command(*, brand: Brand, audio: str, ass: str, out: str, seconds: float,
+def build_command(*, brand: Brand, audio: str | None, ass: str, out: str, seconds: float,
                   claim_status: str, visuals: list[tuple[str, str, float]] | None = None) -> list[str]:
     """Return the ffmpeg argv. Paths are relative to the working directory the caller uses.
 
     visuals: (path, kind, start) from the licensed media library; kind is "clip" or "image".
     Each one gets an equal share of the duration and is shown fitted between the bands over a
     blurred, darkened copy of itself (the usual vertical format for 16:9 trailers). Clip audio
-    is never used: the only sound is our narration.
+    is never used with narration. With audio=None (clip format) the sound is the first
+    visual's own audio track, and that visual must be a clip with audio.
     """
     w, h, fps = brand.width, brand.height, brand.fps
     dur = f"{seconds:.3f}"
@@ -74,7 +75,13 @@ def build_command(*, brand: Brand, audio: str, ass: str, out: str, seconds: floa
                    f"c2={_ffcolor(c['background_top'])}:nb_colors=3"]
         graph.append("[0:v]setsar=1[bg]")
         audio_idx = 1
-    inputs += ["-i", audio]
+    if audio:
+        inputs += ["-i", audio]
+        audio_src, next_idx = f"{audio_idx}:a", audio_idx + 1
+    else:
+        if not visuals or visuals[0][1] != "clip":
+            raise ValueError("audio=None needs a clip as the first visual")
+        audio_src, next_idx = "0:a", audio_idx
 
     tag, tag_color = STATUS_TAG.get(claim_status, STATUS_TAG["not_a_claim"])
     body_font = _ffpath(brand.fonts["body"])
@@ -97,12 +104,12 @@ def build_command(*, brand: Brand, audio: str, ass: str, out: str, seconds: floa
     graph.append(f"[txt][bar]overlay=x='-W+W*t/{dur}':y=H-10:shortest=1[v0]")
     last = "v0"
     if brand.logo_path and Path(brand.logo_path).exists():
-        logo_idx = audio_idx + 1
+        logo_idx = next_idx
         inputs += ["-i", brand.logo_path]
         graph.append(f"[{logo_idx}:v]scale=-1:{int((h - bottom) * 0.42)}[logo]")
         graph.append(f"[v0][logo]overlay=x=(W-w)/2:y={bottom + int((h - bottom) * 0.12)}[v1]")
         last = "v1"
-    graph.append(f"[{audio_idx}:a]loudnorm=I={brand.video.get('loudness_lufs', -14)}:TP=-1.5:LRA=11,"
+    graph.append(f"[{audio_src}]loudnorm=I={brand.video.get('loudness_lufs', -14)}:TP=-1.5:LRA=11,"
                  f"aresample=48000[a]")
 
     return [

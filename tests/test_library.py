@@ -79,5 +79,53 @@ class LibraryTest(unittest.TestCase):
         self.assertEqual(cmd[cmd.index("-map", cmd.index("-map") + 1) + 1], "[a]")
 
 
+class ClipFormatTest(unittest.TestCase):
+    """The page decides per item: visual clips go out with their own audio, text-heavy news is narrated."""
+
+    def draft(self, **kw):
+        from tgv.production.script import ScriptDraft, Segment
+        base = dict(title="GTA 5 com DLSS 5", format="clip", claim_status="reported",
+                    segments=[Segment("", "GTA 5 com DLSS 5")], caption="Olha isso. Fonte: IGN",
+                    hashtags=["gta"], sources=["https://www.ign.com/x"], cover_text="GTA 5 com DLSS 5")
+        base.update(kw)
+        return ScriptDraft(**base)
+
+    def test_clip_needs_a_clip(self):
+        from tgv.production.script import validate_script
+        self.assertTrue(validate_script(self.draft(), item_url="https://www.ign.com/x", item_claim_status="reported",
+                                        clip_available=True).ok)
+        v = validate_script(self.draft(), item_url="https://www.ign.com/x", item_claim_status="reported")
+        self.assertIn("clip format needs", " ".join(v.errors))
+
+    def test_rumor_is_never_clip(self):
+        from tgv.production.script import validate_script
+        d = self.draft(claim_status="unverified", cover_text="Rumor: DLSS 5", caption="Rumor. Fonte: IGN")
+        v = validate_script(d, item_url="https://www.ign.com/x", item_claim_status="unverified", clip_available=True)
+        self.assertIn("rumors are always narrated", " ".join(v.errors))
+
+    def test_narrated_format_needs_narration(self):
+        from tgv.production.script import validate_script
+        v = validate_script(self.draft(format="news"), item_url="https://www.ign.com/x", item_claim_status="reported")
+        self.assertIn("empty narration", " ".join(v.errors))
+
+    def test_template_picks_clip_only_when_available(self):
+        from tgv.production.script import TemplateScriptWriter
+        item = {"source_name": "IGN", "claim_status": "reported", "title": "GTA 5 DLSS 5", "url": "https://www.ign.com/x"}
+        self.assertEqual(TemplateScriptWriter().write(dict(item, clip_available=True)).format, "clip")
+        self.assertEqual(TemplateScriptWriter().write(item).format, "news")
+        self.assertEqual(TemplateScriptWriter().write(dict(item, clip_available=True, claim_status="unverified")).format,
+                         "news")
+
+    def test_clip_render_uses_clip_audio(self):
+        cmd = build_command(brand=BRAND, audio=None, ass="c.ass", out="v.mp4", seconds=20, claim_status="reported",
+                            visuals=[("t.mp4", "clip", 5.0)])
+        graph = cmd[cmd.index("-filter_complex") + 1]
+        self.assertIn("[0:a]loudnorm", graph)
+        self.assertNotIn("n.wav", cmd)
+        with self.assertRaises(ValueError):
+            build_command(brand=BRAND, audio=None, ass="c.ass", out="v.mp4", seconds=20, claim_status="reported",
+                          visuals=[("s.jpg", "image", 0.0)])
+
+
 if __name__ == "__main__":
     unittest.main()

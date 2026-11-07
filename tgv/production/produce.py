@@ -15,10 +15,10 @@ from tgv import db
 from tgv.production import graphics
 from tgv.production.brand import Brand
 from tgv.production.library import Asset, credits, rights_summary, select_assets
-from tgv.production.media import concat_wavs, duration, require, run
+from tgv.production.media import concat_wavs, duration, probe, require, run
 from tgv.production.render import render
 from tgv.production.script import ScriptDraft, validate_script
-from tgv.production.subtitles import build_ass, caption_cues
+from tgv.production.subtitles import build_ass, caption_cues, headline_cues
 
 
 class ProductionBlocked(Exception):
@@ -42,6 +42,18 @@ def _cover_still(assets: list[Asset], workdir: Path) -> Path | None:
         run([require("ffmpeg"), "-y", "-v", "error", "-ss", f"{a.start + 1:.3f}", "-i", a.file,
              "-frames:v", "1", "-q:v", "2", str(out)])
         return out
+    return None
+
+
+def _clip_with_audio(assets: list[Asset]) -> Asset | None:
+    """First library clip whose own audio may be used (not muted, has an audio stream)."""
+    for a in assets:
+        if a.kind == "clip" and not a.mute:
+            try:
+                if any(s.get("codec_type") == "audio" for s in probe(a.file).get("streams", [])):
+                    return a
+            except Exception:
+                continue
     return None
 
 
@@ -81,8 +93,11 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
         conn.commit()
 
     try:
-        draft: ScriptDraft = writer.write(item)
-        check = validate_script(draft, item_url=item["url"], item_claim_status=item["claim_status"])
+        assets = select_assets(library or [], f"{item['title']} {item.get('description') or ''}")
+        clip = _clip_with_audio(assets)
+        draft: ScriptDraft = writer.write(dict(item, clip_available=clip is not None))
+        check = validate_script(draft, item_url=item["url"], item_claim_status=item["claim_status"],
+                                clip_available=clip is not None)
         (workdir / "script.json").write_text(draft.to_json(), encoding="utf-8")
         if not check.ok:
             finish("failed", script=draft.to_json(), validation=json.dumps(asdict(check), ensure_ascii=False),
@@ -91,7 +106,8 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
 
         result = {"production_id": prod_id, "script": str(workdir / "script.json"),
                   "warnings": check.warnings, "video": None, "cover": None, "carousel": []}
-        assets = select_assets(library or [], f"{item['title']} {item.get('description') or ''}")
+        if draft.format == "clip":
+            assets = [clip] + [a for a in assets if a is not clip]
         rights_basis, commercial_ok = rights_summary(assets)
         still = _cover_still(assets, workdir)
         result["assets"] = [a.file for a in assets]
@@ -99,7 +115,15 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
         if make_carousel:
             result["carousel"] = [str(p) for p in graphics.carousel(draft, brand, workdir / "carousel",
                                                                    item["source_name"], image=still)]
-        if make_video:
+        if make_video and draft.format == "clip":
+            # The clip speaks for itself: its own audio, headline box, no narration or translation.
+            total = clip.duration
+            (workdir / "captions.ass").write_text(
+                build_ass(headline_cues([s.on_screen for s in draft.segments], total), brand), encoding="utf-8")
+            render(workdir, brand=brand, audio=None, ass="captions.ass", out="video.mp4", seconds=total,
+                   claim_status=draft.claim_status, visuals=[(str(Path(clip.file).resolve()), "clip", clip.start)])
+            result["video"] = str(workdir / "video.mp4")
+        elif make_video:
             parts, timeline, t = [], [], 0.0
             for i, seg in enumerate(draft.segments):
                 wav = workdir / f"voice_{i:02d}.wav"
@@ -116,7 +140,7 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
             result["video"] = str(workdir / "video.mp4")
 
         notes = list(draft.notes)
-        if getattr(tts, "name", "") == "placeholder":
+        if getattr(tts, "name", "") == "placeholder" and draft.format != "clip":
             notes.append("placeholder (silent) narration: preview only, not publishable")
         if brand.provisional:
             notes.append("provisional brand kit: replace before publishing")

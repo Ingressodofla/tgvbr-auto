@@ -51,6 +51,13 @@ def caption_cues(segments: list[tuple[str, str, float, float]]) -> list[Cue]:
     return cues
 
 
+def headline_cues(on_screen: list[str], total: float) -> list[Cue]:
+    """Clip format: no narration, the on-screen texts share the duration evenly."""
+    texts = [t for t in on_screen if t.strip()] or [""]
+    step = total / len(texts)
+    return [Cue(i * step, (i + 1) * step, t.upper(), "Headline") for i, t in enumerate(texts)]
+
+
 def _ts(seconds: float) -> str:
     cs = int(round(max(0.0, seconds) * 100))
     h, rem = divmod(cs, 360000)
