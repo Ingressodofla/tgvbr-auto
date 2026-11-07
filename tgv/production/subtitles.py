@@ -58,6 +58,20 @@ def headline_cues(on_screen: list[str], total: float) -> list[Cue]:
     return [Cue(i * step, (i + 1) * step, t.upper(), "Headline") for i, t in enumerate(texts)]
 
 
+def timed_caption_cues(lines) -> list[Cue]:
+    """Translated speech (objects with start/end/text) -> short caption chunks inside each line's time."""
+    cues: list[Cue] = []
+    for line in lines:
+        chunks = chunk_words(line.text, max_words=6, max_chars=36)
+        total = sum(len(c) for c in chunks) or 1
+        t = line.start
+        for c in chunks:
+            d = (line.end - line.start) * len(c) / total
+            cues.append(Cue(t, t + d, c, "Caption"))
+            t += d
+    return cues
+
+
 def _ts(seconds: float) -> str:
     cs = int(round(max(0.0, seconds) * 100))
     h, rem = divmod(cs, 360000)

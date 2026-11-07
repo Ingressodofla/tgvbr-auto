@@ -48,6 +48,7 @@ def main(argv: list[str] | None = None) -> int:
     pr.add_argument("--voice", choices=["piper", "placeholder"], default="piper")
     pr.add_argument("--no-video", action="store_true")
     pr.add_argument("--no-carousel", action="store_true")
+    pr.add_argument("--no-subtitles", action="store_true", help="clip format: skip speech transcription")
     pr.add_argument("--brand", default=str(ROOT / "config" / "brand.json"))
     pr.add_argument("--media", default=os.environ.get("TGV_MEDIA_DIR") or str(ROOT / "media"))
     pr.add_argument("--library", default=str(ROOT / "media" / "library" / "library.json"),
@@ -116,6 +117,11 @@ def _produce(args, conn, now) -> int:
 
     brand = load_brand(args.brand)
     library = load_library(args.library)
+    transcriber = translator = None
+    if not args.no_subtitles:
+        from tgv.production.speech import ClaudeTranslator, WhisperTranscriber
+        transcriber = WhisperTranscriber()
+        translator = ClaudeTranslator() if args.writer == "claude" else None
     writer = ClaudeScriptWriter() if args.writer == "claude" else TemplateScriptWriter()
     if args.voice == "piper":
         tts = PiperTTS(brand.voice.get("piper_model", ""), brand.voice.get("length_scale", 1.0))
@@ -129,7 +135,8 @@ def _produce(args, conn, now) -> int:
     for item_id in ids:
         try:
             r = produce(conn, item_id, writer=writer, tts=tts, brand=brand, media_root=Path(args.media), now=now,
-                        make_video=not args.no_video, make_carousel=not args.no_carousel, library=library)
+                        make_video=not args.no_video, make_carousel=not args.no_carousel, library=library,
+                        transcriber=transcriber, translator=translator)
             print(f"item {item_id}: review -> {r['video'] or r['cover']}")
             for w in r["warnings"]:
                 print(f"  warning: {w}")

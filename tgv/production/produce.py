@@ -18,7 +18,8 @@ from tgv.production.library import Asset, credits, rights_summary, select_assets
 from tgv.production.media import concat_wavs, duration, probe, require, run
 from tgv.production.render import render
 from tgv.production.script import ScriptDraft, validate_script
-from tgv.production.subtitles import build_ass, caption_cues, headline_cues
+from tgv.production.speech import needs_subtitles, subtitle_lines
+from tgv.production.subtitles import build_ass, caption_cues, headline_cues, timed_caption_cues
 
 
 class ProductionBlocked(Exception):
@@ -64,7 +65,7 @@ def next_selected(conn: sqlite3.Connection, limit: int) -> list[int]:
 
 def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand, media_root: Path,
             now: datetime, make_video: bool = True, make_carousel: bool = True,
-            library: list[Asset] | None = None) -> dict:
+            library: list[Asset] | None = None, transcriber=None, translator=None) -> dict:
     item = _item(conn, item_id)
     if item["modality"] not in ("B", "C"):
         raise ProductionBlocked(f"modality {item['modality']} needs a licence decision before production")
@@ -115,11 +116,23 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
         if make_carousel:
             result["carousel"] = [str(p) for p in graphics.carousel(draft, brand, workdir / "carousel",
                                                                    item["source_name"], image=still)]
+        speech_notes: list[str] = []
         if make_video and draft.format == "clip":
-            # The clip speaks for itself: its own audio, headline box, no narration or translation.
+            # Own audio + headline box. Foreign speech gets pt-BR subtitles (never dubbing);
+            # gameplay with little talking goes out without subtitles.
             total = clip.duration
-            (workdir / "captions.ass").write_text(
-                build_ass(headline_cues([s.on_screen for s in draft.segments], total), brand), encoding="utf-8")
+            cues = headline_cues([s.on_screen for s in draft.segments], total)
+            if transcriber is not None:
+                transcript = transcriber.transcribe(clip.file, clip.start, total, workdir)
+                (workdir / "transcript.json").write_text(json.dumps(
+                    {"language": transcript.language, "lines": [asdict(l) for l in transcript.lines]},
+                    ensure_ascii=False, indent=2), encoding="utf-8")
+                if needs_subtitles(transcript):
+                    if translator is not None:
+                        cues += timed_caption_cues(subtitle_lines(transcript, translator))
+                    else:
+                        speech_notes.append("speech not subtitled: no translator configured")
+            (workdir / "captions.ass").write_text(build_ass(cues, brand), encoding="utf-8")
             render(workdir, brand=brand, audio=None, ass="captions.ass", out="video.mp4", seconds=total,
                    claim_status=draft.claim_status, visuals=[(str(Path(clip.file).resolve()), "clip", clip.start)])
             result["video"] = str(workdir / "video.mp4")
@@ -139,7 +152,7 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
                    visuals=[(str(Path(a.file).resolve()), a.kind, a.start) for a in assets])
             result["video"] = str(workdir / "video.mp4")
 
-        notes = list(draft.notes)
+        notes = list(draft.notes) + speech_notes
         if getattr(tts, "name", "") == "placeholder" and draft.format != "clip":
             notes.append("placeholder (silent) narration: preview only, not publishable")
         if brand.provisional:

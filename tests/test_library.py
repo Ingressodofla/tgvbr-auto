@@ -127,5 +127,51 @@ class ClipFormatTest(unittest.TestCase):
                           visuals=[("s.jpg", "image", 0.0)])
 
 
+class SubtitleDecisionTest(unittest.TestCase):
+    def test_only_real_foreign_speech_gets_subtitles(self):
+        from tgv.production.speech import Line, Transcript, needs_subtitles
+        talk = [Line(0, 3, "This is the most insane graphics comparison I have ever seen in a game")]
+        self.assertTrue(needs_subtitles(Transcript("en", talk)))
+        self.assertFalse(needs_subtitles(Transcript("en", [Line(0, 1, "Oh wow!")])))  # gameplay noise
+        self.assertFalse(needs_subtitles(Transcript("pt", talk)))
+        self.assertFalse(needs_subtitles(None))
+
+    def test_translated_lines_keep_timing_and_are_chunked(self):
+        from tgv.production.speech import Line, Transcript, subtitle_lines
+        from tgv.production.subtitles import timed_caption_cues
+
+        class FakeTranslator:
+            def translate(self, lines):
+                return ["Essa é a comparação de gráficos mais insana que eu já vi num jogo"] * len(lines)
+
+        t = Transcript("en", [Line(2.0, 6.0, "This is the most insane graphics comparison I have ever seen")])
+        cues = timed_caption_cues(subtitle_lines(t, FakeTranslator()))
+        self.assertGreater(len(cues), 1)
+        self.assertAlmostEqual(cues[0].start, 2.0)
+        self.assertAlmostEqual(cues[-1].end, 6.0)
+        self.assertTrue(all(len(c.text.split()) <= 6 for c in cues))
+
+    def test_claude_translator_request_and_line_count(self):
+        from types import SimpleNamespace
+        from tgv.production.speech import ClaudeTranslator
+
+        class Client:
+            def __init__(self, out):
+                self.out, self.kwargs = out, None
+                self.messages = SimpleNamespace(create=self.create)
+
+            def create(self, **kw):
+                self.kwargs = kw
+                return SimpleNamespace(content=[SimpleNamespace(type="text", text=json.dumps({"lines": self.out}))])
+
+        c = Client(["Olha isso", "Que insano"])
+        self.assertEqual(ClaudeTranslator(client=c).translate(["Look at this", "That's insane"]),
+                         ["Olha isso", "Que insano"])
+        self.assertEqual(c.kwargs["output_config"]["format"]["type"], "json_schema")
+        self.assertIn("<falas>", c.kwargs["messages"][0]["content"])
+        with self.assertRaises(ValueError):
+            ClaudeTranslator(client=Client(["só uma"])).translate(["a", "b"])
+
+
 if __name__ == "__main__":
     unittest.main()
