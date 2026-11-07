@@ -51,6 +51,7 @@ class PipelineTest(unittest.TestCase):
 
     def tearDown(self):
         self.env.stop()
+        self.conn.close()
 
     def rows(self):
         return {r["title"]: r for r in self.conn.execute("SELECT * FROM items")}

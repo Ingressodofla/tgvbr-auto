@@ -1,0 +1,6 @@
+# Stage 1 (discovery/analysis/dashboard) needs only the Python standard library.
+# Stage 2 (production). Versions pinned; upgrade only after review.
+anthropic==2.6.0     # Claude API: scripts and contextual translation
+pillow==12.0.0       # covers and carousels
+piper-tts==1.8.0     # local pt-BR narration (GPL-3.0-or-later; run as a separate program)
+# System dependency: FFmpeg 6+ with libx264, libass and libfreetype.

@@ -2,7 +2,7 @@
 
 > Sistema de operação de conteúdo da **The Game Versus BR**, foco inicial em **GTA VI**.
 > Fluxo: DESCOBERTA → ANÁLISE → SELEÇÃO → PRODUÇÃO → VALIDAÇÃO → AGENDAMENTO → PUBLICAÇÃO → MÉTRICAS.
-> Estado: **etapa 1 implementada** (descoberta, análise, seleção, banco, painel). Nada é publicado.
+> Estado: **etapa 1 implementada** (descoberta, análise, seleção, banco, painel); **etapa 2 implementada** (roteiro, narração, legendas, vídeo vertical, capa, carrossel), aguardando a voz instalada, a chave do Claude e o kit oficial da marca. Nada é publicado.
 
 ## 1. Arquitetura proposta
 
@@ -58,7 +58,7 @@ Código (etapa 1):
 | TikTok / Instagram (descoberta) | CSV manual ou ferramenta de monitoramento autorizada | não há API comercial de descoberta (ver `PLATFORM_LIMITS.md`) | 1 |
 | Roteiro e tradução | Claude API (Anthropic) | qualidade em pt-BR, saída estruturada | 2 |
 | Narração | Piper TTS (local, gratuito, vozes pt-BR) como padrão; ElevenLabs ou Google Cloud TTS como opção paga | começar sem custo, trocar se a voz não convencer | 2 |
-| Legendas sincronizadas | faster-whisper (local) para alinhar palavra a palavra | gratuito, roda em CPU | 2 |
+| Legendas sincronizadas | Tempo exato por segmento (cada trecho é narrado separado) e proporcional dentro dele; faster-whisper só se um dia houver narração humana | sem dependência extra | 2 |
 | Edição | FFmpeg com templates (1080×1920, 30 fps, H.264 + AAC) | gratuito e scriptável | 2 |
 | Capas e carrosséis | Pillow (imagem) com templates da marca | gratuito | 2 |
 | Publicação | Meta Graph API (Instagram + Facebook), TikTok Content Posting API | oficiais | 4 |
@@ -75,7 +75,7 @@ Valores aproximados; confira os preços atuais em cada serviço antes de contrat
 | Execução (agendador) | US$ 0 (PC do dono ou GitHub Actions no limite gratuito) | ~US$ 5–10/mês (VPS pequeno; renderização de vídeo fica mais rápida) |
 | YouTube Data API, RSS, Meta Graph API, TikTok API | US$ 0 | US$ 0 |
 | Reddit API | US$ 0 no uso não comercial aprovado | uso comercial depende de acordo com a Reddit (preço não público) |
-| Claude API (roteiros, tradução, títulos) | alguns dólares/mês para ~3–5 peças/dia | ~US$ 10–30/mês com mais volume e revisões |
+| Claude API (roteiros, tradução, títulos) | ~US$ 5–10/mês para ~5 roteiros/dia (~US$ 0,03–0,07 cada) | ~US$ 15–30/mês com mais volume e revisões |
 | Voz | US$ 0 (Piper local) | plano pago de TTS, a partir de ~US$ 5–22/mês |
 | Armazenamento de mídia | US$ 0 (disco local) | ~US$ 1–5/mês (bucket de objetos) |
 | **Total** | **≈ US$ 0–10/mês** | **≈ US$ 25–70/mês** |
@@ -100,8 +100,8 @@ Cada "agente" é um módulo com responsabilidade única. Só Roteirista e Reviso
 | Scout | Coletar das fontes, isolar falhas, respeitar cotas | `tgv/sources/*` + `pipeline.discover` | 1 ✅ |
 | Analyst | Deduplicar, classificar risco, pontuar | `dedup`, `classify`, `scoring`, `pipeline.analyze` | 1 ✅ |
 | Editor-chefe | Escolher pautas (1 por história, sem itens em revisão) | `pipeline.select` | 1 ✅ |
-| Roteirista | Roteiro em pt-BR, tradução contextual, título, legenda, hashtags | Claude API com saída estruturada | 2 |
-| Produtor | Voz, legendas, montagem vertical, capa, carrossel | Piper, faster-whisper, FFmpeg, Pillow | 2 |
+| Roteirista | Roteiro em pt-BR, tradução contextual, título, legenda, hashtags | `production/script.py` (Claude API, JSON por esquema) | 2 ✅ |
+| Produtor | Voz, legendas, montagem vertical, capa, carrossel | `production/` (Piper, FFmpeg, Pillow) | 2 ✅ |
 | Compliance | Barrar rumor como fato, vazamento, mídia sem licença, checar fontes citadas | regras + checklist + fila humana | 3 |
 | Publisher | Agendar e publicar via APIs oficiais, modo teste primeiro | Meta Graph API, TikTok API | 4 |
 | Analytics | Coletar insights, seguidores, desempenho por formato; ajustar pesos | APIs de insights | 5 |
@@ -113,8 +113,8 @@ Skills do Claude Code (para manutenção, criadas quando a etapa existir): `/tgv
 
 | Etapa | Entrega | Critério de pronto | Depende de você |
 |---|---|---|---|
-| **1. Inteligência de conteúdo** ✅ | Conectores, dedup, classificação, score, seleção, banco, painel, testes | 39 testes passando; `python -m tgv run` gera painel | Chave da YouTube Data API; liberar a rede do agendador para os feeds |
-| 2. Produção original (B) e notícias (C) | Roteiro → narração → legendas → vídeo 1080×1920 com identidade visual; capas e carrosséis | 3 vídeos-teste aprovados por você | Logo, cores, fontes, voz preferida; autorizar Piper/faster-whisper/Pillow/Claude API |
+| **1. Inteligência de conteúdo** ✅ | Conectores, dedup, classificação, score, seleção, banco, painel, testes | testes passando; `python -m tgv run` gera painel | Chave da YouTube Data API; liberar a rede do agendador para os feeds |
+| **2. Produção original (B) e notícias (C)** ✅ código | Roteiro → narração → legendas → vídeo 1080×1920 com identidade visual; capas e carrosséis (`docs/PRODUCTION.md`) | 3 vídeos-teste aprovados por você | Logo, cores e fontes oficiais; chave da API do Claude; ouvir e aprovar a voz |
 | 3. Validação | Regras de compliance, fila de revisão no painel, aprovar/rejeitar | Nenhum rumor sai como fato nos testes | Aprovar as regras de publicação autônoma |
 | 4. Distribuição | Meta Graph API (IG + FB) e TikTok, primeiro em modo teste/privado | Post de teste aparece certo em cada rede | Criar app Meta, conectar contas, pedir auditoria TikTok; **autorizar a primeira publicação real** |
 | 5. Performance | Insights por post e formato, crescimento de seguidores, pesos do score ajustados por dados | Relatório semanal no painel | — |

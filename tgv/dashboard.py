@@ -123,6 +123,23 @@ def render(conn: sqlite3.Connection, now: datetime) -> str:
         f"<td>{_e(a['message'])}</td>", f"<td>{_e(a['created_at'][:16].replace('T', ' '))}</td>",
     ] for a in alerts], "Sem alertas abertos.")
 
+    prods = conn.execute(
+        """SELECT p.*, i.title, i.url FROM productions p LEFT JOIN items i ON i.id = p.item_id
+           ORDER BY p.id DESC LIMIT 20""").fetchall()
+
+    def _file(path, label):
+        return f'<a href="file://{_e(path)}">{label}</a>' if path else ""
+
+    prods_html = _table(["Status", "Pauta", "Roteiro", "Arquivos", "Observações"], [[
+        f'<td class="{"error" if p["status"] == "failed" else "warning" if p["status"] == "review" else "ok"}">'
+        f'{_e(p["status"])}</td>',
+        f'<td><a href="{_e(p["url"])}" rel="noopener noreferrer">{_e(p["title"])}</a></td>',
+        f"<td>{_e(p['writer'])} · {_e(p['modality'])}</td>",
+        "<td>" + " · ".join(x for x in (_file(p["media_path"], "vídeo"), _file(p["cover_path"], "capa"),
+                                         _file(p["carousel_dir"], "carrossel")) if x) + "</td>",
+        f"<td>{_e(p['review_notes'] or '')}</td>",
+    ] for p in prods], "Nenhuma produção ainda. Rode: python -m tgv produce")
+
     pubs = conn.execute("SELECT * FROM publications ORDER BY id DESC LIMIT 20").fetchall()
     pubs_html = _table(["Rede", "Status", "Agendado", "Publicado", "Link"], [[
         f"<td>{_e(p['platform'])}</td>", f"<td>{_e(p['status'])}</td>", f"<td>{_e(p['scheduled_for'])}</td>",
@@ -147,6 +164,7 @@ def render(conn: sqlite3.Connection, now: datetime) -> str:
 <div class="kpis">{kpi_html}</div>
 <h2>Melhores oportunidades (uma por história)</h2>{top}
 <h2>Fila de revisão humana (rumor, vazamento ou licença a conferir)</h2>{review}
+<h2>Produções (aguardando sua revisão)</h2>{prods_html}
 <h2>Publicações</h2>{pubs_html}
 <h2>Monetização</h2>{prog_html}
 <h2>Fontes (última execução)</h2>{runs_html}

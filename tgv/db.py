@@ -90,9 +90,13 @@ CREATE TABLE IF NOT EXISTS productions (
     modality TEXT NOT NULL,
     format TEXT NOT NULL,            -- reel | carousel | image | story
     status TEXT NOT NULL,            -- draft | rendering | ready | review | approved | rejected | failed
-    script TEXT,
+    writer TEXT,
+    script TEXT,                     -- ScriptDraft JSON
+    validation TEXT,                 -- errors/warnings JSON
     caption TEXT,
-    media_path TEXT,
+    media_path TEXT,                 -- vertical video
+    cover_path TEXT,
+    carousel_dir TEXT,
     rights_basis TEXT,               -- licence / permission reference for modality A
     review_notes TEXT,
     created_at TEXT NOT NULL,

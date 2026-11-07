@@ -2,11 +2,11 @@
 
 Operação de conteúdo da **The Game Versus BR** (Instagram, Facebook e TikTok), foco inicial em **GTA VI**.
 
-Estado: **etapa 1 pronta** — descoberta, análise, ranking e painel. Produção, publicação e métricas vêm nas próximas etapas ([plano](docs/ARCHITECTURE.md#6-plano-de-implementação-por-etapas)). **Nada é publicado.**
+Estado: **etapas 1 e 2 prontas** — descoberta, análise, ranking, painel e produção (roteiro, narração, vídeo 1080×1920, capa, carrossel; ver [docs/PRODUCTION.md](docs/PRODUCTION.md)). Validação, publicação e métricas vêm nas próximas etapas ([plano](docs/ARCHITECTURE.md#6-plano-de-implementação-por-etapas)). **Nada é publicado.**
 
 ## Rodar
 
-Requisitos: Python 3.11+. A etapa 1 não usa pacotes de terceiros.
+Requisitos: Python 3.11+. A etapa 1 não usa pacotes de terceiros; a produção usa FFmpeg e `requirements.txt`.
 
 ```bash
 python -m tgv run
@@ -32,10 +32,15 @@ python -m tgv import-csv achados_tiktok.csv
 python -m tgv youtube-channel @RockstarGames
 ```
 
+```bash
+python -m tgv produce --limit 3
+```
+
 ## Credenciais
 
 Copie `.env.example` e preencha no seu ambiente (nunca no repositório). Sem chave, a fonte é pulada e o painel avisa.
 - `TGV_YOUTUBE_API_KEY`: Google Cloud → APIs e serviços → ativar "YouTube Data API v3" → Credenciais → chave de API (restrinja à YouTube Data API). **Não precisa ter canal no YouTube**: basta uma conta Google. A chave só lê dados públicos.
+- `ANTHROPIC_API_KEY`: roteiros com o Claude (etapa 2).
 - `TGV_REDDIT_CLIENT_ID` / `TGV_REDDIT_CLIENT_SECRET`: só depois da aprovação da Reddit.
 
 ## Agendar
@@ -57,4 +62,5 @@ python -m unittest discover -s tests -t .
 ## Documentação
 - [Arquitetura, ferramentas, custos, agentes e plano](docs/ARCHITECTURE.md)
 - [Limites das plataformas](docs/PLATFORM_LIMITS.md)
+- [Produção de vídeos, capas e carrosséis](docs/PRODUCTION.md)
 - [Regras editoriais e de direitos](docs/COMPLIANCE.md)

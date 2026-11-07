@@ -20,3 +20,5 @@ venv/
 *.mov
 *.wav
 *.mp3
+# Downloaded TTS voices (large binaries, own licences)
+voices/

@@ -41,6 +41,15 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--out", default=str(ROOT / "out" / "dashboard.html"))
     imp = sub.add_parser("import-csv", help="import manually found links (TikTok, Instagram...)")
     imp.add_argument("path")
+    pr = sub.add_parser("produce", help="produce script, video, cover and carousel for items")
+    pr.add_argument("item_ids", nargs="*", type=int, help="item ids (default: best selected items)")
+    pr.add_argument("--limit", type=int, default=3, help="how many selected items when no ids are given")
+    pr.add_argument("--writer", choices=["claude", "template"], default="claude")
+    pr.add_argument("--voice", choices=["piper", "placeholder"], default="piper")
+    pr.add_argument("--no-video", action="store_true")
+    pr.add_argument("--no-carousel", action="store_true")
+    pr.add_argument("--brand", default=str(ROOT / "config" / "brand.json"))
+    pr.add_argument("--media", default=os.environ.get("TGV_MEDIA_DIR") or str(ROOT / "media"))
     yc = sub.add_parser("youtube-channel", help="resolve a YouTube @handle to its channel id and feed")
     yc.add_argument("handle")
 
@@ -83,6 +92,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"imported={fetched} new={new}")
         for e in errors:
             print(f"warning: {e}", file=sys.stderr)
+    elif args.cmd == "produce":
+        return _produce(args, conn, now)
     elif args.cmd == "youtube-channel":
         try:
             info = channel_for_handle(http, args.handle)
@@ -92,3 +103,38 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(info, ensure_ascii=False, indent=2) if info else "channel not found")
     conn.close()
     return 0
+
+
+def _produce(args, conn, now) -> int:
+    from tgv.production.brand import load_brand
+    from tgv.production.produce import ProductionBlocked, next_selected, produce
+    from tgv.production.script import ClaudeScriptWriter, TemplateScriptWriter
+    from tgv.production.tts import PiperTTS, PlaceholderTTS
+
+    brand = load_brand(args.brand)
+    writer = ClaudeScriptWriter() if args.writer == "claude" else TemplateScriptWriter()
+    if args.voice == "piper":
+        model = Path(brand.voice.get("piper_model", ""))
+        tts = PiperTTS(model if model.is_absolute() else ROOT / model, brand.voice.get("length_scale", 1.0))
+    else:
+        tts = PlaceholderTTS()
+    ids = args.item_ids or next_selected(conn, args.limit)
+    if not ids:
+        print("nothing selected; run: python -m tgv select")
+        return 0
+    failures = 0
+    for item_id in ids:
+        try:
+            r = produce(conn, item_id, writer=writer, tts=tts, brand=brand, media_root=Path(args.media), now=now,
+                        make_video=not args.no_video, make_carousel=not args.no_carousel)
+            print(f"item {item_id}: review -> {r['video'] or r['cover']}")
+            for w in r["warnings"]:
+                print(f"  warning: {w}")
+        except ProductionBlocked as exc:
+            failures += 1
+            print(f"item {item_id}: blocked ({exc})", file=sys.stderr)
+        except Exception as exc:  # recorded as failed production + alert
+            failures += 1
+            print(f"item {item_id}: failed ({type(exc).__name__}: {exc})", file=sys.stderr)
+    conn.close()
+    return 1 if failures else 0

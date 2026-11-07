@@ -1,0 +1,28 @@
+{
+  "_comment": "PROVISIONAL brand kit. Colours and fonts below are placeholders chosen for legibility, NOT the official identity of The Game Versus BR. Replace them with the official logo, palette and fonts before the first real publication.",
+  "provisional": true,
+  "name": "The Game Versus BR",
+  "handle": "",
+  "logo_path": "",
+  "colors": {
+    "background_top": "#0B0B12",
+    "background_bottom": "#2A0F3D",
+    "accent": "#FF2E88",
+    "accent_2": "#21D4FD",
+    "text": "#FFFFFF",
+    "rumor": "#FFB020",
+    "official": "#2BD576"
+  },
+  "fonts": {
+    "headline": "/usr/share/fonts/opentype/inter/Inter-Black.otf",
+    "body": "/usr/share/fonts/opentype/inter/Inter-Bold.otf",
+    "family_for_captions": "Inter",
+    "fonts_dir": "/usr/share/fonts/opentype/inter"
+  },
+  "video": {"width": 1080, "height": 1920, "fps": 30, "loudness_lufs": -14},
+  "voice": {
+    "engine": "piper",
+    "piper_model": "voices/pt_BR-faber-medium.onnx",
+    "length_scale": 0.95
+  }
+}
