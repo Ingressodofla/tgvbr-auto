@@ -173,5 +173,16 @@ class SubtitleDecisionTest(unittest.TestCase):
             ClaudeTranslator(client=Client(["só uma"])).translate(["a", "b"])
 
 
+class HashtagTest(unittest.TestCase):
+    def test_topic_first_then_page_tags_normalised(self):
+        from tgv.production.brand import final_hashtags
+        tags = final_hashtags(["#GTA6", "GTAVI", "Rockstar", "WestCoastCustoms", "Leonida", "Games", "Lúcia"], BRAND)
+        self.assertEqual(tags[:2], ["gta6", "gtavi"])
+        self.assertEqual(tags[-3:], ["games", "jogos", "videogames"])
+        self.assertEqual(len(tags), len(set(tags)))
+        self.assertLessEqual(len(tags), 8)
+        self.assertTrue(all(t == t.lower() and "#" not in t for t in tags))
+
+
 if __name__ == "__main__":
     unittest.main()

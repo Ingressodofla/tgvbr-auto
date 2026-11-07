@@ -13,7 +13,7 @@ from pathlib import Path
 
 from tgv import db
 from tgv.production import graphics
-from tgv.production.brand import Brand
+from tgv.production.brand import Brand, final_hashtags
 from tgv.production.library import Asset, credits, rights_summary, select_assets
 from tgv.production.media import concat_wavs, duration, probe, require, run
 from tgv.production.render import render
@@ -165,7 +165,7 @@ def produce(conn: sqlite3.Connection, item_id: int, *, writer, tts, brand: Brand
 
         finish("review", script=draft.to_json(), validation=json.dumps(asdict(check), ensure_ascii=False),
                rights_basis=rights_basis,
-               caption=caption + "\n\n" + " ".join(f"#{h.lstrip('#')}" for h in draft.hashtags),
+               caption=caption + "\n\n" + " ".join(f"#{h}" for h in final_hashtags(draft.hashtags, brand)),
                media_path=result["video"], cover_path=result["cover"],
                carousel_dir=str(workdir / "carousel") if make_carousel else None,
                review_notes="; ".join(notes) or None)

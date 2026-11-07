@@ -16,6 +16,7 @@ class Brand:
     handle: str = ""
     logo_path: str = ""
     provisional: bool = True
+    hashtags: dict = field(default_factory=dict)
     extra: dict = field(default_factory=dict)
 
     @property
@@ -58,8 +59,26 @@ def load_brand(path: str | Path) -> Brand:
     return Brand(
         name=data["name"], colors=data["colors"], fonts=fonts, video=data["video"],
         voice=voice, handle=data.get("handle", ""), logo_path=_resolve(data.get("logo_path", ""), root),
-        provisional=bool(data.get("provisional", True)),
+        provisional=bool(data.get("provisional", True)), hashtags=dict(data.get("hashtags", {})),
     )
+
+
+def _tag(text: str) -> str:
+    import unicodedata
+
+    t = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    return "".join(ch for ch in t.lower() if ch.isalnum() or ch == "_")
+
+
+def final_hashtags(topic: list[str], brand: Brand) -> list[str]:
+    """Topic tags from the writer first, then the page's fixed tags; lowercase, no '#', no duplicates."""
+    always = [_tag(t) for t in brand.hashtags.get("always", [])]
+    limit = int(brand.hashtags.get("max", 8))
+    out: list[str] = []
+    for t in [_tag(x) for x in topic][: max(0, limit - len(always))] + always:
+        if t and t not in out:
+            out.append(t)
+    return out[:limit]
 
 
 def hex_to_rgb(color: str) -> tuple[int, int, int]:

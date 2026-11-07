@@ -30,5 +30,14 @@
     "piper_model": "voices/pt_BR-faber-medium.onnx",
     "length_scale": 0.95
   },
-  "_paths": "Relative paths are resolved from the repository root, on Windows, macOS and Linux."
+  "_paths": "Relative paths are resolved from the repository root, on Windows, macOS and Linux.",
+  "hashtags": {
+    "_comment": "always = the page's own tags (from its best TikTok posts), added to every post after the topic tags",
+    "always": [
+      "games",
+      "jogos",
+      "videogames"
+    ],
+    "max": 8
+  }
 }

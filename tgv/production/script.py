@@ -169,7 +169,7 @@ Estrutura:
 - on_screen: título curto do segmento, no máximo 6 palavras.
 - cover_text: no máximo 5 palavras.
 - caption: 1 a 3 frases + crédito da fonte ("Fonte: <veículo>").
-- hashtags: 4 a 8, sem o símbolo #.
+- hashtags: 3 a 5 do assunto, em minúsculas e sem o símbolo # (ex.: gta6, gtavi, rockstargames, o nome do jogo ou do personagem). A página acrescenta sozinha as fixas (games, jogos, videogames); não repita essas.
 - sources: as URLs que você usou, sempre incluindo a URL original recebida.
 
 Regras editoriais (obrigatórias):
