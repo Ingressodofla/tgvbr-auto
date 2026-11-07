@@ -1,6 +1,6 @@
 # TGV BR Auto
 
-Operação de conteúdo da **The Game Versus BR** (Instagram, Facebook e TikTok), foco inicial em **GTA VI**.
+Operação de conteúdo da **The Game Verse BR** (Instagram, Facebook e TikTok), foco inicial em **GTA VI**.
 
 Estado: **etapas 1 e 2 prontas** — descoberta, análise, ranking, painel e produção (roteiro, narração, vídeo 1080×1920, capa, carrossel; ver [docs/PRODUCTION.md](docs/PRODUCTION.md)). Validação, publicação e métricas vêm nas próximas etapas ([plano](docs/ARCHITECTURE.md#6-plano-de-implementação-por-etapas)). **Nada é publicado.**
 

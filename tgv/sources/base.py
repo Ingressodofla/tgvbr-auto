@@ -16,7 +16,7 @@ from typing import Iterable, Protocol
 
 from tgv.models import ContentItem
 
-USER_AGENT = "TGVBRAuto/0.1 (content research for The Game Versus BR)"
+USER_AGENT = "TGVBRAuto/0.1 (content research for The Game Verse BR)"
 
 
 class SourceNotConfigured(Exception):

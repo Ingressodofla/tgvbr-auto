@@ -21,7 +21,7 @@ def _db_path(args) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(prog="tgv", description="The Game Versus BR — content operation")
+    p = argparse.ArgumentParser(prog="tgv", description="The Game Verse BR — content operation")
     p.add_argument("--db", help="SQLite path (default: $TGV_DB_PATH or data/tgv.db)")
     p.add_argument("--config", default=str(ROOT / "config" / "sources.json"))
     sub = p.add_subparsers(dest="cmd", required=True)

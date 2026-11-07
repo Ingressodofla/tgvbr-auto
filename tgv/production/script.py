@@ -144,7 +144,7 @@ SCRIPT_SCHEMA = {
     "additionalProperties": False,
 }
 
-SYSTEM_PROMPT = """Você é roteirista da The Game Versus BR, página brasileira de notícias e análises de games, focada em GTA VI.
+SYSTEM_PROMPT = """Você é roteirista da The Game Verse BR, página brasileira de notícias e análises de games, focada em GTA VI.
 Escreva roteiros para vídeos verticais curtos (Reels, Shorts, TikTok) em português do Brasil natural, com energia, sem gírias forçadas.
 
 Estrutura:
@@ -256,7 +256,7 @@ class TemplateScriptWriter:
         segments = [
             Segment(hook, cover.title()),
             Segment(body, "O que se sabe"),
-            Segment("Segue a The Game Versus BR para não perder nada de GTA seis.", "Siga a página"),
+            Segment("Segue a The Game Verse BR para não perder nada de GTA seis.", "Siga a página"),
         ]
         return ScriptDraft(
             title=title, format="news", claim_status=status, segments=segments, caption=caption,

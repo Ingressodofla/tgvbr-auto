@@ -1,6 +1,6 @@
 # TGV BR Auto — regras do repositório
 
-- Projeto da The Game Versus BR. Não tem relação com a UNBANK; não misturar estado, decisões ou arquivos.
+- Projeto da The Game Verse BR. Não tem relação com a UNBANK; não misturar estado, decisões ou arquivos.
 - Falar com o dono em pt-BR. Conteúdo publicado da página: pt-BR.
 - Nada é publicado em rede real sem autorização explícita do dono. Etapas de distribuição começam em modo teste/privado.
 - Credenciais só em variáveis de ambiente ou cofre do agendador. Nunca em código, config, banco, log, painel ou chat.

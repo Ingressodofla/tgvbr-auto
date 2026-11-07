@@ -159,7 +159,7 @@ def render(conn: sqlite3.Connection, now: datetime) -> str:
     return f"""<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>TGV BR Auto</title>
 <style>{CSS}</style></head><body><main>
-<h1>The Game Versus BR — painel</h1>
+<h1>The Game Verse BR — painel</h1>
 <p class="sub">Gerado em {_e(now.strftime('%d/%m/%Y %H:%M'))} UTC · foco: GTA VI</p>
 <div class="kpis">{kpi_html}</div>
 <h2>Melhores oportunidades (uma por história)</h2>{top}

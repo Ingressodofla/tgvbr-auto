@@ -1,6 +1,6 @@
 # Arquitetura — TGV BR Auto
 
-> Sistema de operação de conteúdo da **The Game Versus BR**, foco inicial em **GTA VI**.
+> Sistema de operação de conteúdo da **The Game Verse BR**, foco inicial em **GTA VI**.
 > Fluxo: DESCOBERTA → ANÁLISE → SELEÇÃO → PRODUÇÃO → VALIDAÇÃO → AGENDAMENTO → PUBLICAÇÃO → MÉTRICAS.
 > Estado: **etapa 1 implementada** (descoberta, análise, seleção, banco, painel); **etapa 2 implementada** (roteiro, narração, legendas, vídeo vertical, capa, carrossel), aguardando a voz instalada, a chave do Claude e o kit oficial da marca. Nada é publicado.
 
@@ -113,6 +113,7 @@ Skills do Claude Code (para manutenção, criadas quando a etapa existir): `/tgv
 
 | Etapa | Entrega | Critério de pronto | Depende de você |
 |---|---|---|---|
+| **0. Diagnóstico das contas existentes** (pendente) | Levantar o que já existe no Instagram, Facebook e TikTok da página: identidade visual, @, seguidores, posts antigos e o que teve melhor desempenho; usar isso no kit de marca e nos pesos do score | Kit de marca oficial no lugar do provisório | Mandar os links das contas e, se possível, o logo e a exportação de dados de cada rede |
 | **1. Inteligência de conteúdo** ✅ | Conectores, dedup, classificação, score, seleção, banco, painel, testes | testes passando; `python -m tgv run` gera painel | Chave da YouTube Data API; liberar a rede do agendador para os feeds |
 | **2. Produção original (B) e notícias (C)** ✅ código | Roteiro → narração → legendas → vídeo 1080×1920 com identidade visual; capas e carrosséis (`docs/PRODUCTION.md`) | 3 vídeos-teste aprovados por você | Logo, cores e fontes oficiais; chave da API do Claude; ouvir e aprovar a voz |
 | 3. Validação | Regras de compliance, fila de revisão no painel, aprovar/rejeitar | Nenhum rumor sai como fato nos testes | Aprovar as regras de publicação autônoma |
