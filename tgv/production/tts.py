@@ -27,7 +27,7 @@ class PiperTTS:
         self.python = python
 
     def check(self) -> None:
-        if not self.model_path.exists():
+        if not self.model_path.is_file():
             raise MediaError(
                 f"Piper voice not found: {self.model_path}. Download pt_BR-faber-medium.onnx and "
                 ".onnx.json (see docs/PRODUCTION.md) and set voice.piper_model in config/brand.json."

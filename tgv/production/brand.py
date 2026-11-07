@@ -37,11 +37,27 @@ class Brand:
         return self.handle or self.name
 
 
+def _resolve(value: str, root: Path) -> str:
+    if not value:
+        return value
+    p = Path(value)
+    return str(p if p.is_absolute() else (root / p).resolve())
+
+
 def load_brand(path: str | Path) -> Brand:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    """Load config/brand.json; relative paths are resolved from the repository root."""
+    path = Path(path).resolve()
+    root = path.parent.parent
+    data = json.loads(path.read_text(encoding="utf-8"))
+    fonts = dict(data["fonts"])
+    for key in ("headline", "body", "fonts_dir"):
+        fonts[key] = _resolve(fonts.get(key, ""), root)
+    voice = dict(data.get("voice", {}))
+    if voice.get("piper_model"):
+        voice["piper_model"] = _resolve(voice["piper_model"], root)
     return Brand(
-        name=data["name"], colors=data["colors"], fonts=data["fonts"], video=data["video"],
-        voice=data.get("voice", {}), handle=data.get("handle", ""), logo_path=data.get("logo_path", ""),
+        name=data["name"], colors=data["colors"], fonts=fonts, video=data["video"],
+        voice=voice, handle=data.get("handle", ""), logo_path=_resolve(data.get("logo_path", ""), root),
         provisional=bool(data.get("provisional", True)),
     )
 

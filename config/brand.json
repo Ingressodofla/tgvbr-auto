@@ -14,15 +14,21 @@
     "official": "#2BD576"
   },
   "fonts": {
-    "headline": "/usr/share/fonts/opentype/inter/Inter-Black.otf",
-    "body": "/usr/share/fonts/opentype/inter/Inter-Bold.otf",
+    "headline": "assets/fonts/Inter-Black.otf",
+    "body": "assets/fonts/Inter-Bold.otf",
     "family_for_captions": "Inter",
-    "fonts_dir": "/usr/share/fonts/opentype/inter"
+    "fonts_dir": "assets/fonts"
   },
-  "video": {"width": 1080, "height": 1920, "fps": 30, "loudness_lufs": -14},
+  "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "loudness_lufs": -14
+  },
   "voice": {
     "engine": "piper",
     "piper_model": "voices/pt_BR-faber-medium.onnx",
     "length_scale": 0.95
-  }
+  },
+  "_paths": "Relative paths are resolved from the repository root, on Windows, macOS and Linux."
 }

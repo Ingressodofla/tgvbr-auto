@@ -114,8 +114,7 @@ def _produce(args, conn, now) -> int:
     brand = load_brand(args.brand)
     writer = ClaudeScriptWriter() if args.writer == "claude" else TemplateScriptWriter()
     if args.voice == "piper":
-        model = Path(brand.voice.get("piper_model", ""))
-        tts = PiperTTS(model if model.is_absolute() else ROOT / model, brand.voice.get("length_scale", 1.0))
+        tts = PiperTTS(brand.voice.get("piper_model", ""), brand.voice.get("length_scale", 1.0))
     else:
         tts = PlaceholderTTS()
     ids = args.item_ids or next_selected(conn, args.limit)

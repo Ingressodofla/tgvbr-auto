@@ -21,6 +21,11 @@ STATUS_TAG = {"confirmed": ("OFICIAL", "official"), "reported": ("NOTÍCIA", "ac
               "unverified": ("RUMOR · NÃO CONFIRMADO", "rumor"), "not_a_claim": ("GTA VI", "accent_2")}
 
 
+def _ffpath(path: str) -> str:
+    """Path for use inside a filtergraph: forward slashes, drive colon escaped (C\\:/...)."""
+    return Path(path).as_posix().replace(":", r"\:").replace("'", "")
+
+
 def _ffcolor(hex_color: str) -> str:
     return "0x" + hex_color.lstrip("#")
 
@@ -56,7 +61,8 @@ def build_command(*, brand: Brand, audio: str, ass: str, out: str, seconds: floa
     inputs += ["-i", audio]
 
     tag, tag_color = STATUS_TAG.get(claim_status, STATUS_TAG["not_a_claim"])
-    body_font = brand.fonts["body"]
+    body_font = _ffpath(brand.fonts["body"])
+    fonts_dir = _ffpath(brand.fonts.get("fonts_dir", ""))
     label = brand.label().replace(":", r"\:").replace("'", "")
     tag_txt = tag.replace(":", r"\:")
     accent = _ffcolor(brand.color("accent"))
@@ -66,7 +72,7 @@ def build_command(*, brand: Brand, audio: str, ass: str, out: str, seconds: floa
         f"drawtext=fontfile='{body_font}':text='{label}':x=60:y=38:fontsize=44:fontcolor=white,"
         f"drawtext=fontfile='{body_font}':text='{tag_txt}':x=w-tw-60:y=160:fontsize=40:fontcolor=black:"
         f"box=1:boxcolor={_ffcolor(brand.color(tag_color))}:boxborderw=18,"
-        f"subtitles=filename='{ass}':fontsdir='{brand.fonts.get('fonts_dir', '')}'[txt]"
+        f"subtitles=filename='{ass}':fontsdir='{fonts_dir}'[txt]"
     )
     graph.append(f"color=c={accent}:s={w}x10:r={fps}:d={dur}[bar]")
     graph.append(f"[txt][bar]overlay=x='-W+W*t/{dur}':y=H-10:shortest=1[v0]")
