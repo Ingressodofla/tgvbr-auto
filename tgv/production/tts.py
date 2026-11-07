@@ -10,6 +10,7 @@ PlaceholderTTS: silent audio with a realistic duration. For tests and for
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -38,7 +39,9 @@ class PiperTTS:
         proc = subprocess.run(
             [self.python, "-m", "piper", "-m", str(self.model_path), "-f", str(out_wav),
              "--length-scale", str(self.length_scale)],
-            input=text, capture_output=True, text=True,
+            # UTF-8 on both ends: on Windows the default console encoding mangles pt-BR accents.
+            input=text, capture_output=True, text=True, encoding="utf-8",
+            env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"},
         )
         if proc.returncode != 0:
             raise MediaError(f"piper failed: {proc.stderr.strip()[-500:]}")

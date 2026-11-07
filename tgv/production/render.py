@@ -53,10 +53,20 @@ def build_command(*, brand: Brand, audio: str | None, ass: str, out: str, second
     if visuals:
         per = f"{seconds / len(visuals):.3f}"
         for i, (path, kind, start) in enumerate(visuals):
-            if kind == "clip":
-                inputs += ["-stream_loop", "-1", "-ss", f"{start:.3f}", "-t", per, "-i", path]
-            else:
-                inputs += ["-loop", "1", "-framerate", str(fps), "-t", per, "-i", path]
+            if kind != "clip":
+                # Stills fill the whole area between the bands with a slow push-in (reads as motion).
+                frames = max(1, round(seconds / len(visuals) * fps))
+                inputs += ["-i", path]
+                graph.append(
+                    f"[{i}:v]scale={w * 2}:{mid_h * 2}:force_original_aspect_ratio=increase,"
+                    f"crop={w * 2}:{mid_h * 2},"
+                    f"zoompan=z='1+0.12*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+                    f":d={frames}:s={w}x{mid_h}:fps={fps},"
+                    f"pad={w}:{h}:0:(oh-ih)/2:black,trim=duration={per},setpts=PTS-STARTPTS,"
+                    f"setsar=1,format=yuv420p[bg{i}]"
+                )
+                continue
+            inputs += ["-stream_loop", "-1", "-ss", f"{start:.3f}", "-t", per, "-i", path]
             graph.append(
                 f"[{i}:v]fps={fps},split[a{i}][b{i}];"
                 f"[a{i}]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},"
